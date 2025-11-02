@@ -7,6 +7,7 @@
 #define VGA_COLS 80
 #define VGA_ROWS 25
 
+void vga_init(void);
 void vga_clear_screen(void);
 void vga_putchar(char c);
 void vga_print(const char* s);

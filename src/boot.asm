@@ -1,29 +1,37 @@
-section .multiboot2_header
-header_start:
-    dd 0xe85250d6                ; Magic number
-    dd 0                         ; Architecture 0 (i386)
-    dd header_end - header_start ; Header length
-    dd 0x100000000 - (0xe85250d6 + 0 + (header_end - header_start)) ; Checksum
-    
-    ; End tag
-    dw 0    ; Type
-    dw 0    ; Flags  
-    dd 8    ; Size
-header_end:
+section .multiboot
+align 4
+multiboot_header:
+    dd 0x1BADB002               ; Magic number
+    dd 0x00000003               ; Flags
+    dd -(0x1BADB002 + 0x00000003) ; Checksum
 
 section .text
 global _start
+extern kmain
+
 _start:
-    ; Set up stack
+    ; Проверка multiboot
+    cmp eax, 0x2BADB002
+    jne no_multiboot
+    
+    ; Настройка стека
     mov esp, stack_top
     
-    ; Call kernel main
-    extern kmain
+    ; Вызов kernel main
+    push ebx                    ; Multiboot info structure
+    push eax                    ; Multiboot magic number
     call kmain
-
-.hang:
+    
+    ; Если kmain вернется
+    cli
+hang:
     hlt
-    jmp .hang
+    jmp hang
+
+no_multiboot:
+    mov dword [0xB8000], 0x4F424F4F  ; Вывести 'BOO' на экран (красный)
+    cli
+    hlt
 
 section .bss
 align 16

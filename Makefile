@@ -2,7 +2,7 @@ CC = gcc
 AS = nasm
 LD = ld
 
-CFLAGS = -ffreestanding -nostdlib -Wall -Wextra -O2 -m32 -Isrc -fno-stack-protector
+CFLAGS = -std=gnu99 -ffreestanding -fno-builtin -nostdlib -nostartfiles -nodefaultlibs -Wall -Wextra -O2 -m32 -Isrc -fno-stack-protector -fno-pie -fno-pic
 ASFLAGS = -f elf32
 LDFLAGS = -T linker.ld -nostdlib -static -m elf_i386
 
@@ -11,7 +11,7 @@ OBJDIR = build
 ISO_DIR = iso
 
 KERNEL_OBJS = $(OBJDIR)/boot.o $(OBJDIR)/kernel.o $(OBJDIR)/vga.o \
-              $(OBJDIR)/keyboard.o $(OBJDIR)/commands.o $(OBJDIR)/ports.o
+              $(OBJDIR)/keyboard.o $(OBJDIR)/commands.o $(OBJDIR)/ports.o $(OBJDIR)/fs.o
 
 all: $(ISO_DIR)/os.iso
 
@@ -38,9 +38,12 @@ $(ISO_DIR)/os.iso: $(ISO_DIR)/boot/kernel.elf $(ISO_DIR)/boot/grub/grub.cfg
 	grub-mkrescue -o $@ $(ISO_DIR)
 
 run: $(ISO_DIR)/os.iso
-	qemu-system-x86_64 -cdrom $(ISO_DIR)/os.iso -m 512M
+	qemu-system-i386 -cdrom $(ISO_DIR)/os.iso -m 1G
+
+debug: $(ISO_DIR)/os.iso
+	qemu-system-i386 -cdrom $(ISO_DIR)/os.iso -m 1G -no-reboot -no-shutdown -serial stdio
 
 clean:
 	rm -rf $(OBJDIR) kernel.elf $(ISO_DIR)
 
-.PHONY: all run clean
+.PHONY: all run debug clean
