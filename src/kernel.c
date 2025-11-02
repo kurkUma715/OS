@@ -7,7 +7,6 @@ void kmain(unsigned long magic, unsigned long addr)
 {
     if (magic != 0x2BADB002)
     {
-        // Не multiboot-совместимый загрузчик
         vga_print("Error: Invalid multiboot magic\n");
         return;
     }
@@ -24,11 +23,8 @@ void kmain(unsigned long magic, unsigned long addr)
 
     for (;;)
     {
-
         static char prompt[128] = "[root@huesiso";
-
         command_strcpy(prompt, "[root@huesiso");
-
         char *current_path = fs_get_current_path();
 
         uint16_t i = 13;
@@ -65,31 +61,37 @@ void kmain(unsigned long magic, unsigned long addr)
             vga_print("shutdown - Shutdown system\n");
             continue;
         }
+
         if (command_strcmp(input_buffer, "uwu") == 0)
         {
             vga_print("Nyyaa~!\n");
             continue;
         }
+
         if (command_strcmp(input_buffer, "clear") == 0)
         {
             vga_clear_screen();
             continue;
         }
+
         if (command_strcmp(input_buffer, "reboot") == 0)
         {
             command_do_reboot();
             continue;
         }
+
         if (command_strcmp(input_buffer, "shutdown") == 0)
         {
             command_do_shutdown();
             continue;
         }
+
         if (command_strcmp(input_buffer, "exit") == 0)
         {
             command_do_shutdown();
             continue;
         }
+
         if (command_strncmp(input_buffer, "ls", 2) == 0)
         {
             const char *path = input_buffer + 2;
@@ -100,6 +102,7 @@ void kmain(unsigned long magic, unsigned long addr)
             fs_list_directory(path);
             continue;
         }
+
         if (command_strncmp(input_buffer, "cat", 3) == 0)
         {
             const char *filename = input_buffer + 3;
@@ -115,6 +118,7 @@ void kmain(unsigned long magic, unsigned long addr)
             }
             continue;
         }
+
         if (command_strncmp(input_buffer, "touch", 5) == 0)
         {
             const char *filename = input_buffer + 5;
@@ -135,6 +139,7 @@ void kmain(unsigned long magic, unsigned long addr)
             }
             continue;
         }
+
         if (command_strncmp(input_buffer, "mkdir", 5) == 0)
         {
             const char *dirname = input_buffer + 5;
@@ -155,6 +160,7 @@ void kmain(unsigned long magic, unsigned long addr)
             }
             continue;
         }
+
         if (command_strncmp(input_buffer, "rm", 2) == 0)
         {
             const char *filename = input_buffer + 2;
@@ -175,6 +181,7 @@ void kmain(unsigned long magic, unsigned long addr)
             }
             continue;
         }
+
         if (command_strncmp(input_buffer, "rmdir", 5) == 0)
         {
             const char *dirname = input_buffer + 5;
@@ -195,6 +202,7 @@ void kmain(unsigned long magic, unsigned long addr)
             }
             continue;
         }
+
         if (command_strncmp(input_buffer, "cd", 2) == 0)
         {
             const char *path = input_buffer + 2;
@@ -205,9 +213,11 @@ void kmain(unsigned long magic, unsigned long addr)
 
             if (fs_change_directory(path))
             {
+                // Путь успешно изменен
             }
             continue;
         }
+
         if (command_strncmp(input_buffer, "pwd", 3) == 0)
         {
             vga_print(fs_get_current_path());
