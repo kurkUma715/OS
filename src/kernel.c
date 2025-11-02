@@ -17,7 +17,15 @@ void kmain(void) {
         }
 
         if (command_strcmp(input_buffer, "help") == 0) {
-            vga_print("Idi naxuy!\n");
+            vga_print("help - show this text\n");
+            vga_print("uwu - Nya~...\n");
+            vga_print("clear - Clear terminal\n");
+            vga_print("shutdown - Shutdown\n");
+            vga_print("reboot - Reboot\n");
+            continue;
+        }
+        if (command_strcmp(input_buffer, "uwu") == 0) {
+            vga_print("Nyyaa~!\n");
             continue;
         }
         if (command_strcmp(input_buffer, "clear") == 0) {
@@ -25,11 +33,9 @@ void kmain(void) {
             continue;
         }
         if (command_strcmp(input_buffer, "reboot") == 0) {
-            vga_print("Rebooting...\n");
             command_do_reboot();
         }
         if (command_strcmp(input_buffer, "shutdown") == 0) {
-            vga_print("Shutting down...\n");
             command_do_shutdown();
         }
 

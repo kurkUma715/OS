@@ -40,10 +40,7 @@ $(ISO_DIR)/os.iso: $(ISO_DIR)/boot/kernel.elf $(ISO_DIR)/boot/grub/grub.cfg
 run: $(ISO_DIR)/os.iso
 	qemu-system-x86_64 -cdrom $(ISO_DIR)/os.iso -m 512M
 
-debug: $(ISO_DIR)/os.iso
-	qemu-system-x86_64 -cdrom $(ISO_DIR)/os.iso -m 512M -d cpu_reset -no-reboot -no-shutdown
-
 clean:
 	rm -rf $(OBJDIR) kernel.elf $(ISO_DIR)
 
-.PHONY: all run debug clean
+.PHONY: all run clean
