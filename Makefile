@@ -47,16 +47,16 @@ $(ISO_DIR)/boot/grub/grub.cfg: grub.cfg
 $(ISO): $(ISO_DIR)/boot/kernel.elf $(ISO_DIR)/boot/grub/grub.cfg
 	grub-mkrescue -o $(ISO) $(ISO_DIR) >/dev/null 2>&1 || true
 
-# Create bootable IMG ===
+# Create bootable IMG
 $(IMG): kernel.elf grub.cfg create_image.sh
 	./create_image.sh
 
 # Run QEMU
 run: $(IMG)
-	qemu-system-i386 -m ${RAM} -hda $(IMG)
+	qemu-system-i386 -m ${RAM} -drive format=raw,file=$(IMG)
 
 debug: $(IMG)
-	qemu-system-i386 -m ${RAM} -hda $(IMG) -no-reboot -no-shutdown -serial stdio
+	qemu-system-i386 -m ${RAM} -drive format=raw,file=$(IMG) -no-reboot -no-shutdown -serial stdio
 
 clean:
 	rm -rf $(BUILD) kernel.elf $(ISO_DIR) $(IMG)

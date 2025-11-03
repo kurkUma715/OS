@@ -1,5 +1,6 @@
 #include "vga.h"
 #include "commands.h"
+#include "conf.h"
 #include <stdint.h>
 
 static void delay(uint32_t ticks)
@@ -13,9 +14,12 @@ void kmain(void)
     vga_init();
     vga_clear_screen();
     vga_enable_cursor(13, 15);
-    vga_update_cursor(0, 0);
 
-    vga_print("Welcome to HuesOS (kernel 0.1)\n");
+    vga_print("Welcome to ");
+    vga_print(KERNEL_NAME);
+    vga_print(" (");
+    vga_print(KERNEL_VERSION);
+    vga_print(")\n");
 
     for (;;)
     {
@@ -42,9 +46,9 @@ void kmain(void)
 
         if (command_strcmp(input_buffer, "help") == 0)
         {
-            vga_print("help    - Show this help\n");
-            vga_print("clear   - Clear screen\n");
-            vga_print("reboot  - Reboot system\n");
+            vga_print("help     - Show this help\n");
+            vga_print("clear    - Clear screen\n");
+            vga_print("reboot   - Reboot system\n");
             vga_print("shutdown - Shutdown system\n");
             continue;
         }

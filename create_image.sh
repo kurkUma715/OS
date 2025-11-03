@@ -4,7 +4,7 @@ set -e
 KERNEL="kernel.elf"
 IMAGE="huesos.img"
 MOUNT_DIR="mnt"
-SIZE_MB=32
+SIZE_MB=64
 
 if [ ! -f "$KERNEL" ]; then
     echo "> ERROR: $KERNEL not found. make."
