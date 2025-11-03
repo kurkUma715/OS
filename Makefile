@@ -2,7 +2,7 @@
 CC      := gcc
 AS      := nasm
 LD      := ld
-OBJS    := build/boot.o build/kernel.o build/vga.o build/ports.o
+OBJS    := build/boot.o build/kernel.o build/vga.o build/ports.o build/commands.o build/keyboard.o
 
 # Flags
 CFLAGS  := -std=gnu99 -ffreestanding -fno-builtin -nostdlib -nostartfiles -nodefaultlibs \
@@ -10,15 +10,17 @@ CFLAGS  := -std=gnu99 -ffreestanding -fno-builtin -nostdlib -nostartfiles -nodef
 ASFLAGS := -f elf32
 LDFLAGS := -T linker.ld -nostdlib -static -m elf_i386
 
+# Values
+RAM 	:= 1G
+NAME 	:= huesos
+
 # Paths
 SRC_DIR := src
 BUILD   := build
 ISO_DIR := iso
-ISO     := $(ISO_DIR)/huesos.iso
-IMG     := huesos.img
+ISO     := $(ISO_DIR)/${NAME}.iso
+IMG     := ${NAME}.img
 
-# Values
-RAM 	:= 1G
 
 # Targets
 all: $(ISO)
