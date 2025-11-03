@@ -11,7 +11,7 @@ void vga_init(void);
 void vga_clear_screen(void);
 void vga_putchar(char c);
 void vga_print(const char *s);
-void vga_enable_cursor(uint8_t cursor_start, uint8_t cursor_end);
+void vga_enable_cursor();
 void vga_update_cursor(uint8_t row, uint8_t col);
 void vga_write_char_at(uint8_t row, uint8_t col, char c);
 

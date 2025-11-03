@@ -7,6 +7,8 @@ static volatile uint16_t *const VGA_BUFFER = (uint16_t *)VGA_ADDRESS;
 uint8_t terminal_row = 0;
 uint8_t terminal_col = 0;
 static uint8_t terminal_color = 0x0F;
+static uint8_t cursor_start = 13;
+static uint8_t cursor_end = 15;
 
 void vga_init(void)
 {
@@ -33,7 +35,7 @@ void vga_clear_screen(void)
     terminal_col = 0;
 }
 
-void vga_enable_cursor(uint8_t cursor_start, uint8_t cursor_end)
+void vga_enable_cursor()
 {
     outb(0x3D4, 0x0A);
     outb(0x3D5, (inb(0x3D5) & 0xC0) | cursor_start);
@@ -86,7 +88,6 @@ void vga_putchar(char c)
             terminal_row--;
             terminal_col = VGA_COLS - 1;
         }
-        // Записываем пробел в текущую позицию
         vga_write_char_at(terminal_row, terminal_col, ' ');
         vga_update_cursor(terminal_row, terminal_col);
         return;

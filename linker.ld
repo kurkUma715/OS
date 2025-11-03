@@ -1,14 +1,27 @@
 ENTRY(_start)
+
 SECTIONS
 {
-  . = 1M;  /* GRUB загружает ядро по 1Мб по умолчанию */
-
-  .text : {
-    *(.multiboot)
-    *(.text*)
-  }
-
-  .rodata : { *(.rodata*) }
-  .data   : { *(.data*) }
-  .bss    : { *(.bss*) *(COMMON) }
+    . = 1M;
+    .multiboot :
+    {
+        KEEP(*(.multiboot))
+    }
+    .text :
+    {
+        *(.text*)
+    }
+    .rodata :
+    {
+        *(.rodata*)
+    }
+    .data :
+    {
+        *(.data*)
+    }
+    .bss :
+    {
+        *(.bss*)
+        *(COMMON)
+    }
 }

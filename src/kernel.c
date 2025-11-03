@@ -3,70 +3,71 @@
 #include "conf.h"
 #include <stdint.h>
 
-static void delay(uint32_t ticks)
+static char name[32] = "root";
+
+static void build_prompt(char *prompt, uint16_t size, const char *username, const char *current_path)
 {
-    for (volatile uint32_t i = 0; i < ticks * 100000; i++)
-        __asm__ volatile("nop");
+    uint16_t i = 0;
+
+    prompt[i++] = '[';
+
+    const char *n = username;
+    while (*n && i < size - 1)
+        prompt[i++] = *n++;
+
+    prompt[i++] = '@';
+
+    const char *sysname = "OS";
+    const char *s = sysname;
+    while (*s && i < size - 1)
+        prompt[i++] = *s++;
+
+    prompt[i++] = ' ';
+
+    const char *path = current_path;
+    while (*path && i < size - 1)
+        prompt[i++] = *path++;
+
+    prompt[i++] = ']';
+    prompt[i++] = ' ';
+    prompt[i] = 0;
 }
 
 void kmain(void)
 {
     vga_init();
     vga_clear_screen();
-    vga_enable_cursor(13, 15);
+    vga_enable_cursor();
 
     vga_print("Welcome to HuesOS (0.0.1)\n");
 
     for (;;)
     {
-        static char prompt[128] = "[root@HuesOS";
-        command_strcpy(prompt, "[root@HuesOS");
+        static char prompt[128];
         char *current_path = "/";
 
-        uint16_t i = 12;
-        prompt[i++] = ' ';
-        while (*current_path && i < sizeof(prompt) - 3)
-        {
-            prompt[i++] = *current_path++;
-        }
-        prompt[i++] = ']';
-        prompt[i++] = ' ';
-        prompt[i] = 0;
+        build_prompt(prompt, sizeof(prompt), name, current_path);
 
         command_prompt_and_readline(prompt);
 
-        if (input_len == 0 || ctrl_c_pressed)
+        if (input_len == 0)
         {
+            if (ctrl_c_pressed)
+            {
+                ctrl_c_pressed = false;
+                continue;
+            }
+
+            if (ctrl_d_pressed)
+            {
+                ctrl_d_pressed = false;
+                break;
+            }
+
             continue;
         }
 
-        if (command_strcmp(input_buffer, "help") == 0)
-        {
-            vga_print("help     - Show this help\n");
-            vga_print("clear    - Clear screen\n");
-            vga_print("reboot   - Reboot system\n");
-            vga_print("shutdown - Shutdown system\n");
-            continue;
-        }
-        else if (command_strcmp(input_buffer, "clear") == 0)
-        {
-            vga_clear_screen();
-            continue;
-        }
-        else if (command_strcmp(input_buffer, "reboot") == 0)
-        {
-            command_do_reboot();
-        }
-        else if (command_strcmp(input_buffer, "shutdown") == 0)
-        {
-            command_do_shutdown();
-        }
-        else
-        {
-            vga_print("Unknown command: ");
-            vga_print(input_buffer);
-            vga_print("\n");
-            continue;
-        }
+        if (command_dispatch(name))
+            break;
     }
 }

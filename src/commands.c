@@ -6,6 +6,7 @@
 char input_buffer[INPUT_BUFFER_SIZE] = {0};
 uint16_t input_len = 0;
 bool ctrl_c_pressed = false;
+bool ctrl_d_pressed = false;
 
 extern uint8_t terminal_row;
 extern uint8_t terminal_col;
@@ -70,6 +71,81 @@ void command_do_shutdown(void)
     }
 }
 
+void command_delay(uint32_t ticks)
+{
+    for (volatile uint32_t i = 0; i < ticks * 100000; i++)
+        __asm__ volatile("nop");
+}
+
+bool command_dispatch(const char *name)
+{
+    if (command_strcmp(input_buffer, "help") == 0)
+    {
+        vga_print("help     - Show this help\n");
+        vga_print("whoami   - Show your name\n");
+        vga_print("delay <ms> - Delay by ms\n");
+        vga_print("clear    - Clear screen\n");
+        vga_print("reboot   - Reboot system\n");
+        vga_print("shutdown - Shutdown system\n");
+        vga_print("exit     - Exit from user\n");
+        return false;
+    }
+    else if (command_strcmp(input_buffer, "whoami") == 0)
+    {
+        vga_print(name);
+        vga_print("\n");
+        return false;
+    }
+    else if (command_strncmp(input_buffer, "delay", 5) == 0)
+    {
+        const char *arg = input_buffer + 5;
+        while (*arg == ' ')
+            arg++;
+
+        if (*arg)
+        {
+            uint32_t ticks = 0;
+            while (*arg >= '0' && *arg <= '9')
+            {
+                ticks = ticks * 10 + (*arg - '0');
+                arg++;
+            }
+            command_delay(ticks);
+        }
+        else
+        {
+            command_delay(1);
+        }
+
+        return false;
+    }
+    else if (command_strcmp(input_buffer, "clear") == 0)
+    {
+        vga_clear_screen();
+        return false;
+    }
+    else if (command_strcmp(input_buffer, "reboot") == 0)
+    {
+        command_do_reboot();
+    }
+    else if (command_strcmp(input_buffer, "shutdown") == 0)
+    {
+        command_do_shutdown();
+    }
+    else if (command_strcmp(input_buffer, "exit") == 0)
+    {
+        return true;
+    }
+    else
+    {
+        vga_print("Unknown command: ");
+        vga_print(input_buffer);
+        vga_print("\n");
+        return false;
+    }
+    return true;
+}
+
 void command_prompt_and_readline(const char *prompt)
 {
     vga_print(prompt);
@@ -97,7 +173,9 @@ void command_prompt_and_readline(const char *prompt)
         if (event.ctrl_d && input_len == 0)
         {
             vga_print("exit\n");
-            command_do_shutdown();
+            ctrl_d_pressed = true;
+            input_len = 0;
+            input_buffer[0] = 0;
             return;
         }
 
