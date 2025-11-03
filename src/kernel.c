@@ -15,11 +15,7 @@ void kmain(void)
     vga_clear_screen();
     vga_enable_cursor(13, 15);
 
-    vga_print("Welcome to ");
-    vga_print(KERNEL_NAME);
-    vga_print(" (");
-    vga_print(KERNEL_VERSION);
-    vga_print(")\n");
+    vga_print("Welcome to HuesOS (0.0.1)\n");
 
     for (;;)
     {
