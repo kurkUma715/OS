@@ -2,7 +2,7 @@
 CC      := gcc
 AS      := nasm
 LD      := ld
-OBJS    := build/boot.o build/kernel.o build/vga.o build/ports.o build/commands.o build/keyboard.o
+OBJS    := build/boot.o build/kernel.o build/vga.o build/ports.o build/commands.o build/keyboard.o build/ata.o build/fat32.o build/string.o
 
 # Flags
 CFLAGS  := -std=gnu99 -ffreestanding -fno-builtin -nostdlib -nostartfiles -nodefaultlibs \
@@ -53,10 +53,10 @@ $(IMG): kernel.elf grub.cfg create_image.sh
 
 # Run QEMU
 run: $(IMG)
-	qemu-system-i386 -m ${RAM} -drive format=raw,file=$(IMG)
+	qemu-system-i386 -m ${RAM} -hda $(IMG)
 
 debug: $(IMG)
-	qemu-system-i386 -m ${RAM} -drive format=raw,file=$(IMG) -no-reboot -no-shutdown -serial stdio
+	qemu-system-i386 -m ${RAM} -hda $(IMG) -no-reboot -no-shutdown -serial stdio
 
 clean:
 	rm -rf $(BUILD) kernel.elf $(ISO_DIR) $(IMG)

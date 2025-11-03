@@ -14,6 +14,7 @@ void vga_print(const char *s);
 void vga_enable_cursor();
 void vga_update_cursor(uint8_t row, uint8_t col);
 void vga_write_char_at(uint8_t row, uint8_t col, char c);
+void vga_print_num(uint32_t num);
 
 extern uint8_t terminal_row;
 extern uint8_t terminal_col;

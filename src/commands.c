@@ -2,6 +2,9 @@
 #include "vga.h"
 #include "keyboard.h"
 #include "ports.h"
+#include "ata.h"
+#include "fat32.h"
+#include <string.h>
 
 char input_buffer[INPUT_BUFFER_SIZE] = {0};
 uint16_t input_len = 0;
@@ -10,6 +13,22 @@ bool ctrl_d_pressed = false;
 
 extern uint8_t terminal_row;
 extern uint8_t terminal_col;
+
+fat32_t fs;
+fat32_dir_t current_dir;
+char current_path[256] = "/";
+
+char *command_strrchr(const char *s, int c)
+{
+    const char *last = NULL;
+    while (*s)
+    {
+        if (*s == (char)c)
+            last = s;
+        s++;
+    }
+    return (char *)last;
+}
 
 int command_strcmp(const char *a, const char *b)
 {
@@ -41,6 +60,16 @@ int command_strncmp(const char *a, const char *b, uint16_t n)
             return 0;
     }
     return 0;
+}
+
+void command_strcat(char *dest, const char *src)
+{
+    char *end = dest;
+    while (*end)
+        end++;
+    while (*src)
+        *end++ = *src++;
+    *end = 0;
 }
 
 uint16_t command_strlen(const char *s)
@@ -85,6 +114,11 @@ bool command_dispatch(const char *name)
         vga_print("whoami   - Show your name\n");
         vga_print("delay <ms> - Delay by ms\n");
         vga_print("clear    - Clear screen\n");
+        vga_print("lsblk    - List Partitions\n");
+        vga_print("mount    - Mount partition\n");
+        vga_print("ls       - File list\n");
+        vga_print("cat      - Show source file\n");
+        vga_print("cd       - Change directory\n");
         vga_print("reboot   - Reboot system\n");
         vga_print("shutdown - Shutdown system\n");
         vga_print("exit     - Exit from user\n");
@@ -127,14 +161,44 @@ bool command_dispatch(const char *name)
     else if (command_strcmp(input_buffer, "reboot") == 0)
     {
         command_do_reboot();
+        return true;
     }
     else if (command_strcmp(input_buffer, "shutdown") == 0)
     {
         command_do_shutdown();
+        return true;
     }
     else if (command_strcmp(input_buffer, "exit") == 0)
     {
         return true;
+    }
+    else if (command_strcmp(input_buffer, "lsblk") == 0)
+    {
+        ata_lsblk();
+        return false;
+    }
+    else if (command_strcmp(input_buffer, "mount") == 0)
+    {
+        fat32_mount(0, &fs);
+        return false;
+    }
+    else if (command_strcmp(input_buffer, "ls") == 0)
+    {
+        fat32_list_dir(0, &fs, &current_dir);
+        return false;
+    }
+    else if (command_strncmp(input_buffer, "cat ", 4) == 0)
+    {
+        fat32_cat(0, &fs, input_buffer + 4);
+        return false;
+    }
+    else if (command_strncmp(input_buffer, "cd ", 3) == 0)
+    {
+        if (!fat32_cd(0, &fs, &current_dir, input_buffer + 3))
+            vga_print("No such directory\n");
+        else
+            update_current_path(current_path, input_buffer + 3);
+        return false;
     }
     else
     {
@@ -269,4 +333,26 @@ void command_prompt_and_readline(const char *prompt)
             vga_update_cursor(terminal_row, terminal_col);
         }
     }
+}
+
+void update_current_path(char *path, const char *newdir)
+{
+    if (command_strcmp(newdir, "/") == 0)
+    {
+        command_strcpy(path, "/");
+        return;
+    }
+    if (command_strcmp(newdir, "..") == 0)
+    {
+        char *last = command_strrchr(path, '/');
+        if (last && last != path)
+            *last = '\0';
+        else
+            command_strcpy(path, "/");
+        return;
+    }
+
+    if (command_strcmp(path, "/") != 0)
+        command_strcat(path, "/");
+    command_strcat(path, newdir);
 }

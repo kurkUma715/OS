@@ -1,5 +1,6 @@
 #include "vga.h"
 #include "ports.h"
+#include <stdbool.h>
 
 #define USED __attribute__((used))
 
@@ -121,4 +122,25 @@ void vga_print(const char *s)
 {
     for (uint64_t i = 0; s[i]; ++i)
         vga_putchar(s[i]);
+}
+
+void vga_print_num(uint32_t num)
+{
+    char buf[11];
+    int i = 0;
+
+    if (num == 0)
+    {
+        vga_putchar('0');
+        return;
+    }
+
+    while (num > 0 && i < 10)
+    {
+        buf[i++] = '0' + (num % 10);
+        num /= 10;
+    }
+
+    for (int j = i - 1; j >= 0; j--)
+        vga_putchar(buf[j]);
 }
