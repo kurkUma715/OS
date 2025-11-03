@@ -2,6 +2,7 @@
 #include "keyboard.h"
 #include "commands.h"
 #include "fs.h"
+#include "fat32.h"
 
 void kmain(unsigned long magic, unsigned long addr)
 {
@@ -16,16 +17,27 @@ void kmain(unsigned long magic, unsigned long addr)
     vga_enable_cursor(13, 15);
     vga_update_cursor(0, 0);
 
-    vga_print("Initializing file system...\n");
-    fs_init();
+    vga_print("Initializing ATA Controller...\n");
+    ata_init();
 
+    vga_print("Checking for ATA drives...\n");
+    if (ata_identify())
+    {
+        vga_print("ATA drive detected successfully\n");
+    }
+    else
+    {
+        vga_print("No ATA drive detected\n");
+    }
+
+    vga_clear_screen();
     vga_print("Welcome to HuesOS!\n");
 
     for (;;)
     {
         static char prompt[128] = "[root@huesiso";
         command_strcpy(prompt, "[root@huesiso");
-        char *current_path = fs_get_current_path();
+        char *current_path = "/";
 
         uint16_t i = 13;
         prompt[i++] = ' ';
@@ -46,7 +58,6 @@ void kmain(unsigned long magic, unsigned long addr)
 
         if (command_strcmp(input_buffer, "help") == 0)
         {
-            vga_print("Available commands:\n");
             vga_print("help    - Show this help\n");
             vga_print("clear   - Clear screen\n");
             vga_print("ls      - List files\n");
@@ -57,6 +68,7 @@ void kmain(unsigned long magic, unsigned long addr)
             vga_print("rmdir   - Remove directory\n");
             vga_print("cd      - Change directory\n");
             vga_print("pwd     - Show current directory\n");
+            vga_print("lsblk   - Show all partitions\n");
             vga_print("reboot  - Reboot system\n");
             vga_print("shutdown - Shutdown system\n");
             continue;
@@ -92,7 +104,7 @@ void kmain(unsigned long magic, unsigned long addr)
             continue;
         }
 
-        if (command_strncmp(input_buffer, "ls", 2) == 0)
+        /*if (command_strncmp(input_buffer, "ls", 2) == 0)
         {
             const char *path = input_buffer + 2;
             while (*path == ' ')
@@ -222,6 +234,12 @@ void kmain(unsigned long magic, unsigned long addr)
         {
             vga_print(fs_get_current_path());
             vga_print("\n");
+            continue;
+        }*/
+
+        if (command_strcmp(input_buffer, "lsblk") == 0)
+        {
+            fat32_list_partitions();
             continue;
         }
 

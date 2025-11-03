@@ -22,7 +22,7 @@ _start:
     push eax                    ; Multiboot magic number
     call kmain
     
-    ; Если kmain вернется
+    ;Если kmain вернется
     cli
 hang:
     hlt

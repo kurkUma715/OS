@@ -11,9 +11,9 @@ OBJDIR = build
 ISO_DIR = iso
 
 KERNEL_OBJS = $(OBJDIR)/boot.o $(OBJDIR)/kernel.o $(OBJDIR)/vga.o \
-              $(OBJDIR)/keyboard.o $(OBJDIR)/commands.o $(OBJDIR)/ports.o $(OBJDIR)/fs.o
+              $(OBJDIR)/keyboard.o $(OBJDIR)/commands.o $(OBJDIR)/ports.o $(OBJDIR)/fs.o $(OBJDIR)/fat32.o $(OBJDIR)/ata.o
 
-all: $(ISO_DIR)/os.iso
+all: $(ISO_DIR)/huesos.iso
 
 $(OBJDIR)/boot.o: $(SRC)/boot.asm
 	mkdir -p $(OBJDIR)
@@ -34,14 +34,16 @@ $(ISO_DIR)/boot/grub/grub.cfg: grub.cfg
 	mkdir -p $(ISO_DIR)/boot/grub
 	cp $< $@
 
-$(ISO_DIR)/os.iso: $(ISO_DIR)/boot/kernel.elf $(ISO_DIR)/boot/grub/grub.cfg
-	grub-mkrescue -o $@ $(ISO_DIR)
+# Create ISO with proper GRUB setup
+$(ISO_DIR)/huesos.iso: $(ISO_DIR)/boot/kernel.elf $(ISO_DIR)/boot/grub/grub.cfg
+	@echo "Creating ISO..."
+	grub-mkrescue -o $@ $(ISO_DIR) 2>/dev/null || true
 
-run: $(ISO_DIR)/os.iso
-	qemu-system-i386 -cdrom $(ISO_DIR)/os.iso -m 1G
+run: $(ISO_DIR)/huesos.iso
+	qemu-system-i386 -m 1G -cdrom $(ISO_DIR)/huesos.iso
 
-debug: $(ISO_DIR)/os.iso
-	qemu-system-i386 -cdrom $(ISO_DIR)/os.iso -m 1G -no-reboot -no-shutdown -serial stdio
+debug: $(ISO_DIR)/huesos.iso
+	qemu-system-i386 -m 1G -no-reboot -no-shutdown -serial stdio -cdrom $(ISO_DIR)/huesos.iso
 
 clean:
 	rm -rf $(OBJDIR) kernel.elf $(ISO_DIR)

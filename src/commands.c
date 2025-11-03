@@ -2,6 +2,8 @@
 #include "vga.h"
 #include "keyboard.h"
 #include "ports.h"
+#include "fat32.h"
+#include "ata.h"
 
 char input_buffer[INPUT_BUFFER_SIZE] = {0};
 uint16_t input_len = 0;
@@ -40,6 +42,14 @@ int command_strncmp(const char *a, const char *b, uint16_t n)
             return 0;
     }
     return 0;
+}
+
+uint16_t command_strlen(const char *s)
+{
+    uint16_t len = 0;
+    while (s[len] != '\0')
+        len++;
+    return len;
 }
 
 void command_do_reboot(void)
