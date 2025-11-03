@@ -1,2 +1,5 @@
-
 .vscode/
+OLD/
+build/
+kernel.elf
+huesos.img
