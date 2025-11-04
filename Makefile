@@ -1,64 +1,43 @@
-# Toolchain
-CC      := gcc
-AS      := nasm
-LD      := ld
-OBJS    := build/boot.o build/kernel.o build/vga.o build/ports.o build/commands.o build/keyboard.o build/ata.o build/fat32.o build/string.o
+kernel_source_files := $(shell find src/impl/kernel -name *.c)
+kernel_object_files := $(patsubst src/impl/kernel/%.c, build/kernel/%.o, $(kernel_source_files))
 
-# Flags
-CFLAGS  := -std=gnu99 -ffreestanding -fno-builtin -nostdlib -nostartfiles -nodefaultlibs \
-           -Wall -Wextra -O2 -m32 -Isrc -fno-stack-protector -fno-pie -fno-pic
-ASFLAGS := -f elf32
-LDFLAGS := -T linker.ld -nostdlib -static -m elf_i386
+x86_64_c_source_files := $(shell find src/impl/x86_64 -name *.c)
+x86_64_c_object_files := $(patsubst src/impl/x86_64/%.c, build/x86_64/%.o, $(x86_64_c_source_files))
 
-# Values
-RAM 	:= 1G
-NAME 	:= huesos
+x86_64_asm_source_files := $(shell find src/impl/x86_64 -name *.asm)
+x86_64_asm_object_files := $(patsubst src/impl/x86_64/%.asm, build/x86_64/%.o, $(x86_64_asm_source_files))
 
-# Paths
-SRC_DIR := src
-BUILD   := build
-ISO_DIR := iso
-ISO     := $(ISO_DIR)/${NAME}.iso
-IMG     := ${NAME}.img
+x86_64_object_files := $(x86_64_c_object_files) $(x86_64_asm_object_files)
 
+# Флаги компиляции для 64-битного режима
+CFLAGS := -ffreestanding -mno-red-zone -m64 -nostdlib -nostartfiles -nodefaultlibs -I src/intf
 
-# Targets
-all: $(ISO)
+$(kernel_object_files): build/kernel/%.o : src/impl/kernel/%.c
+	mkdir -p $(dir $@) && \
+	gcc $(CFLAGS) -c $(patsubst build/kernel/%.o, src/impl/kernel/%.c, $@) -o $@
 
-$(BUILD)/boot.o: $(SRC_DIR)/boot.asm
-	@mkdir -p $(BUILD)
-	$(AS) $(ASFLAGS) $< -o $@
+$(x86_64_c_object_files): build/x86_64/%.o : src/impl/x86_64/%.c
+	mkdir -p $(dir $@) && \
+	gcc $(CFLAGS) -c $(patsubst build/x86_64/%.o, src/impl/x86_64/%.c, $@) -o $@
 
-$(BUILD)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(BUILD)
-	$(CC) $(CFLAGS) -c $< -o $@
+$(x86_64_asm_object_files): build/x86_64/%.o : src/impl/x86_64/%.asm
+	mkdir -p $(dir $@) && \
+	nasm -f elf64 $(patsubst build/x86_64/%.o, src/impl/x86_64/%.asm, $@) -o $@
 
-kernel.elf: $(OBJS) linker.ld
-	$(LD) $(LDFLAGS) $(OBJS) -o $@
-
-$(ISO_DIR)/boot/kernel.elf: kernel.elf
-	@mkdir -p $(ISO_DIR)/boot
-	cp $< $@
-
-$(ISO_DIR)/boot/grub/grub.cfg: grub.cfg
-	@mkdir -p $(ISO_DIR)/boot/grub
-	cp $< $@
-
-$(ISO): $(ISO_DIR)/boot/kernel.elf $(ISO_DIR)/boot/grub/grub.cfg
-	grub-mkrescue -o $(ISO) $(ISO_DIR) >/dev/null 2>&1 || true
-
-# Create bootable IMG
-$(IMG): kernel.elf grub.cfg create_image.sh
-	./create_image.sh
-
-# Run QEMU
-run: $(IMG)
-	qemu-system-i386 -m ${RAM} -hda $(IMG)
-
-debug: $(IMG)
-	qemu-system-i386 -m ${RAM} -hda $(IMG) -no-reboot -no-shutdown -serial stdio
+.PHONY: build-x86_64
+build-x86_64: $(kernel_object_files) $(x86_64_object_files)
+	mkdir -p dist/x86_64 && \
+	ld -n -o dist/x86_64/kernel.bin -T targets/x86_64/linker.ld $(kernel_object_files) $(x86_64_object_files) && \
+	cp dist/x86_64/kernel.bin targets/x86_64/iso/boot/kernel.bin && \
+	grub-mkrescue /usr/lib/grub/i386-pc -o dist/x86_64/kernel.iso targets/x86_64/iso
 
 clean:
-	rm -rf $(BUILD) kernel.elf $(ISO_DIR) $(IMG)
+	rm -rf build/ dist/
 
-.PHONY: all run debug clean
+run:
+	qemu-system-x86_64 -cdrom dist/x86_64/kernel.iso
+
+setup:
+	cp dist/x86_64/kernel.bin /boot/kernel.bin
+
+all: build-x86_64
